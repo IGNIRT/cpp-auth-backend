@@ -1,94 +1,65 @@
-# C++ бэкенд: регистрация пользователя
+# C++ Auth Backend (Test Task)
+
 Реализация HTTP-эндпоинта `/auth/register` на C++ с сохранением пользователя в PostgreSQL.
 
 ## Стек технологий
-- **C++ 17** (Visual Studio 2026)
-- **HTTP-сервер:** `httplib.h` (header-only)
-- **JSON:** `nlohmann/json.hpp`
-- **Хеширование:** Argon2id (`argon2.h`)
-- **База данных:** PostgreSQL 18 (`libpq`)
+- **C++17**
+- **HTTP-сервер:** `cpp-httplib` (header-only)
+- **JSON:** `nlohmann/json` (header-only)
+- **Хеширование:** Argon2id (`libargon2`)
+- **База данных:** PostgreSQL (`libpq`)
 
-## Структура проекта
-main.cpp # HTTP-сервер и обработчик
-valid.h / valid.cpp # Валидация данных
-database.h / database.cpp # Подключение к PostgreSQL
-httplib.h # Библиотека для HTTP
-json.hpp # Библиотека для JSON
-argon2.h # Библиотека для хеширования
-init.sql # SQL-скрипт для создания таблицы
-README.md # Эта инструкция
+## Особенности реализации
+- **Безопасность:** Использование параметризованных запросов (`PQexecParams`) для полной защиты от SQL-инъекций.
+- **Хеширование:** Пароли хешируются с помощью Argon2id с уникальной солью для каждого пользователя.
+- **Конфигурация:** Все настройки читаются из **переменных окружения** (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `SERVER_PORT`).
+- **Валидация:** Строгая проверка всех полей согласно спецификации (длина, формат email, сложность пароля, обязательные поля для бизнес-аккаунтов).
 
-## Зависимости
-### Основные библиотеки (необходимы для сборки)
-| Библиотека | Назначение | Установка |
-|-----------|------------|-----------|
-| **libpq** | Клиентская библиотека PostgreSQL | `vcpkg install libpq` (Windows) или `apt install libpq-dev` (Linux) |
-| **Argon2** | Хеширование паролей | `vcpkg install argon2` (Windows) или `apt install libargon2-dev` (Linux) |
-| **nlohmann/json** | Работа с JSON | Уже включена в проект (header-only) |
-| **httplib.h** | HTTP-сервер | Уже включена в проект (header-only) |
+## Как запустить
 
-### Инструменты
-- **vcpkg** (рекомендуется для Windows) – менеджер пакетов C/C++. Установите по инструкции [vcpkg.io](https://vcpkg.io/).
-- Visual Studio 2026.
-- Компилятор с поддержкой C++17.
-
-## Быстрая установка зависимостей
-## Windows (vcpkg)
+### 1. Установка зависимостей
+**Windows (vcpkg):**
 ```bash
-git clone https://github.com/Microsoft/vcpkg.git
-cd vcpkg
-bootstrap-vcpkg.bat
-vcpkg integrate install
 vcpkg install libpq:x64-windows argon2:x64-windows
 ```
-## Linux (Ubuntu/Debian)
+**Linux (Ubuntu/Debian):**
 ```bash
 sudo apt update
 sudo apt install libpq-dev libargon2-dev cmake g++
-## База данных
-Перед запуском проекта выполни скрипт `init.sql` в PostgreSQL.
 ```
-### 1. Создание базы данных
-```sql
-CREATE DATABASE mydb;
-```
-### 2. Запуск скрипта
+
+### 2. Настройка базы данных
+Создайте базу данных и выполните скрипт `init.sql`:
 ```bash
 psql -U postgres -d mydb -f init.sql
 ```
-### 3. Подключение с вашим паролем 
-В файле database.cpp замените пароль на свой:
-```cpp
-string getConnectionString() {
-    return "host=localhost port=5432 dbname=mydb user=postgres password=";
-}
-```
-### 4. Откройте проект в Visual Studio
-Соберите проект: Ctrl + Shift + B
-Запустите: F5
-В консоли увидите: Server starting on port 8090...
 
-## Примеры запроса
-POST http://localhost:8090/auth/register
-Body (JSON):
-```json
-{
+### 3. Настройка переменных окружения
+Создайте файл `.env` в корне проекта или экспортируйте переменные в терминале:
+```bash
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_NAME=mydb
+export DB_USER=postgres
+export DB_PASSWORD=your_secure_password
+export SERVER_PORT=8090
+```
+
+### 4. Сборка и запуск
+Соберите проект в Visual Studio или через CMake и запустите исполняемый файл. Сервер будет доступен по адресу `http://localhost:8090`.
+
+## Пример запроса
+```bash
+curl -X POST http://localhost:8090/auth/register \
+-H "Content-Type: application/json" \
+-d '{
   "username": "testuser",
   "email": "test@mail.com",
   "phone": "+79001234567",
   "password": "SecurePass1"
-}
+}'
 ```
-Успешный ответ:
-```json
-{
-  "success": true,
-  "message": "User registered successfully.",
-  "user": {
-    "username": "testuser",
-    "email": "test@mail.com",
-    "role": "individual",
-    "id": "550e8400-e29b-41d4-a716-446655440000"
-  }
-}
-```
+
+## Примечание для ревью
+1. **Пул соединений:** В текущей реализации используется глобальное соединение с БД (`g_conn`) для упрощения тестового задания. В продакшен-среде, учитывая многопоточную природу `cpp-httplib`, необходимо использовать пул соединений (connection pool) для обеспечения потокобезопасности.
+2. **Пароль по умолчанию:** Значение пароля по умолчанию в `getEnvOrDefault` оставлено только для удобства локального тестирования этого задания. В реальном проекте, если переменная окружения `DB_PASSWORD` не задана, программа должна выбрасывать исключение или завершаться с ошибкой, чтобы не использовать небезопасные значения по умолчанию.
