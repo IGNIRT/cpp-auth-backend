@@ -1,0 +1,17 @@
+.vs/
+x64/
+Debug/
+Release/
+*.exe
+*.ilk
+*.obj
+*.pdb
+*.log
+*.tlog/
+*.recipe
+*.FileListAbsolute.txt
+*.dll
+.postman/
+postman/
+Thumbs.db
+Desktop.ini
