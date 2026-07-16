@@ -18,9 +18,36 @@ argon2.h # Библиотека для хеширования
 init.sql # SQL-скрипт для создания таблицы
 README.md # Эта инструкция
 
+## Зависимости
+### Основные библиотеки (необходимы для сборки)
+| Библиотека | Назначение | Установка |
+|-----------|------------|-----------|
+| **libpq** | Клиентская библиотека PostgreSQL | `vcpkg install libpq` (Windows) или `apt install libpq-dev` (Linux) |
+| **Argon2** | Хеширование паролей | `vcpkg install argon2` (Windows) или `apt install libargon2-dev` (Linux) |
+| **nlohmann/json** | Работа с JSON | Уже включена в проект (header-only) |
+| **httplib.h** | HTTP-сервер | Уже включена в проект (header-only) |
+
+### Инструменты
+- **vcpkg** (рекомендуется для Windows) – менеджер пакетов C/C++. Установите по инструкции [vcpkg.io](https://vcpkg.io/).
+- Visual Studio 2026.
+- Компилятор с поддержкой C++17.
+
+## Быстрая установка зависимостей
+## Windows (vcpkg)
+```bash
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+bootstrap-vcpkg.bat
+vcpkg integrate install
+vcpkg install libpq:x64-windows argon2:x64-windows
+```
+## Linux (Ubuntu/Debian)
+```bash
+sudo apt update
+sudo apt install libpq-dev libargon2-dev cmake g++
 ## База данных
 Перед запуском проекта выполни скрипт `init.sql` в PostgreSQL.
-
+```
 ### 1. Создание базы данных
 ```sql
 CREATE DATABASE mydb;
